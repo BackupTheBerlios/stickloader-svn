@@ -83,4 +83,12 @@ public class FileCopier implements FileProcessor {
 		return totalCop;
 	}
 
+	public void setDestDir(File destDir) {
+		this.destDir = destDir;
+	}
+
+	public void setTempDir(File tmpDir) {
+		this.tmpDir = tmpDir;
+	}
+
 }

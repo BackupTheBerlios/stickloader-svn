@@ -5,8 +5,8 @@ import java.io.InputStreamReader;
 
 public class Mp3Encoder implements FileProcessor {
 
-	final static public String LAME = "d:\\tools\\lame\\lame.exe";
-	final static public String ARGS = "--priority 1 -f --abr 100";
+	private String lamePath;
+	private String [] args; //= "--priority 1 -f --abr 100";
 
 	private String filename;
 	private File destDir;
@@ -14,10 +14,11 @@ public class Mp3Encoder implements FileProcessor {
 	
 	private int progress = 0;
 	
-	public Mp3Encoder(File destDir) {
+	public Mp3Encoder(File destDir, String lamePath, String args) {
 		filename = "NOTHING";
+		this.lamePath = lamePath;
 		this.destDir = destDir;
-		
+		setLameArgs(args);
 	}
 	
 	public String getCurrentFilename() {
@@ -26,6 +27,14 @@ public class Mp3Encoder implements FileProcessor {
 
 	public int getProgress() {
 		return progress;
+	}
+	
+	public void setDestDir(File f) {
+		destDir = f;
+	}
+	
+	public void setLameArgs(String s) {
+		this.args = parseArgs("--priority --nohist --disptime 0.5 " + s);
 	}
 
 	public boolean processFile(Mp3File file) {
@@ -37,7 +46,16 @@ public class Mp3Encoder implements FileProcessor {
 		
 		try {
 			progress = 0;
-			Process ps = Runtime.getRuntime().exec(new String [] { LAME, "--priority", "--nohist", "--disptime", "0.5", "-f", "--abr", "100", file.getSrcFile().getAbsolutePath(), targetFile.getAbsolutePath()});
+			String [] newargs = new String[args.length+3];
+			System.arraycopy(args, 0, newargs, 1, args.length);
+			newargs[0] = lamePath;
+			newargs[args.length+1] = file.getSrcFile().getAbsolutePath();
+			newargs[args.length+2] = targetFile.getAbsolutePath();
+			
+			Process ps = Runtime.getRuntime().exec(newargs);
+			
+			
+			//Process ps = Runtime.getRuntime().exec(new String [] { lamePath, "--priority", "--nohist", "--disptime", "0.5", "-f", "--abr", "100", , targetFile.getAbsolutePath()});
 			//final BufferedReader input = new BufferedReader(new InputStreamReader(ps.getInputStream()));
 			ps.getInputStream().close();
 			final BufferedReader error = new BufferedReader(new InputStreamReader(ps.getErrorStream()));
@@ -86,6 +104,19 @@ public class Mp3Encoder implements FileProcessor {
 			e.printStackTrace();
 			return false;
 		}
+	}
+	
+	private String [] parseArgs(String args) {
+		return args.split(" ");
+	}
+	
+	
+	public void setLamePath(String s) {
+		lamePath = s;
+	}
+	
+	public String getLamePath() {
+		return lamePath;
 	}
 	
 	public int getTotalFiles() {

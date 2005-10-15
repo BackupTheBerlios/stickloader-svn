@@ -1,75 +1,83 @@
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.util.Properties;
+
 
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.dnd.DND;
-import org.eclipse.swt.dnd.DropTarget;
-import org.eclipse.swt.dnd.DropTargetEvent;
-import org.eclipse.swt.dnd.DropTargetListener;
-import org.eclipse.swt.dnd.FileTransfer;
-import org.eclipse.swt.dnd.Transfer;
+import org.eclipse.swt.custom.CLabel;
+import org.eclipse.swt.dnd.*;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Button;
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.layout.FillLayout;
-import org.eclipse.swt.layout.RowLayout;
-import org.eclipse.swt.layout.RowData;
+import org.eclipse.swt.widgets.FileDialog;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
+import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.ProgressBar;
-import org.eclipse.swt.widgets.List;
 import org.eclipse.ui.forms.events.ExpansionAdapter;
 import org.eclipse.ui.forms.events.ExpansionEvent;
 import org.eclipse.ui.forms.widgets.ExpandableComposite;
-import org.eclipse.ui.part.DrillDownComposite;
+import org.eclipse.swt.widgets.Table;
 
 public class JMp3 {
-	
 	private static JMp3 theApp;
+	
+	final static public String NAME = "StickLoader";
+	final static public String VERSION = "0.1";
 
 	private FileQueue encodingQueue;
 	private FileQueue copyQueue;
 	
-	private FileProcessor encoder;
-	private FileProcessor copier;
+	private Mp3Encoder encoder;
+	private FileCopier copier;
 	
-	final static public File TMP_DIR = new File("D:\\temp");
-	final static public File DEST_DIR = new File("D:\\target");
+	private String lamePath;
+	private File tempDir;// = new File("D:\\temp");
+	private File destDir;// = new File("D:\\target");
+	private String lameArgs = ""; // Defaultvalue
 	
-	private Shell sShell = null;  //  @jve:decl-index=0:visual-constraint="155,27"
+	private Shell sShell = null;  //  @jve:decl-index=0:visual-constraint="93,43"
 	private Label label = null;
-	private Label encodedFileNameLabel = null;
-	private Label encodedFilesLabel = null;
+	private CLabel encodedFileNameLabel = null;
+	private CLabel encodedFilesLabel = null;
 	private Label label2 = null;
-	private Label copyFileNameLabel = null;
-	private Label copyFilesLabel = null;
+	private CLabel copyFileNameLabel = null;
+	private CLabel copyFilesLabel = null;
+	private Menu menu = null;
 	
 	boolean running;
 	private ProgressBar encodingProgress = null;
 	private ProgressBar copyingProgress = null;
 	private ExpandableComposite composite = null;
 
-	private Label label3 = null;
-
-	private Label label1 = null;
-
-	private List debugList = null;
+	private Table debugTable = null;
+	
+	private int backupTableSize = 100;
 
 	public JMp3() {
 		theApp = this;
 		
 		encodingQueue = new FileQueue();
 		copyQueue = new FileQueue();
-		
 
-		encoder = new Mp3Encoder(TMP_DIR);
-		copier = new FileCopier(TMP_DIR, DEST_DIR);
-		
 		createSShell();
+		
+		readProperties();
+		verifySettings();
+		
+		encoder = new Mp3Encoder(tempDir, lamePath, lameArgs);
+		copier = new FileCopier(tempDir, destDir);
+		
+		menu = getPopupMenu();
+		
 		sShell.open();
 		
 		addDrop();
@@ -81,7 +89,53 @@ public class JMp3 {
 		 while (!sShell.isDisposed()) {
 			 if (!sShell.getDisplay().readAndDispatch ()) sShell.getDisplay().sleep ();
 		 }
+		 
+		 //maybe closing
+		 writeProperties();
 	}
+	
+	private void readProperties() {
+		try {
+			File f = new File(System.getProperty("user.home"), ".stickloader");
+			if (f.exists()) {		
+				Properties props = new Properties();
+				props.loadFromXML(new FileInputStream(f));
+				
+				lamePath = props.getProperty("lame.path");
+				lameArgs = props.getProperty("lame.args");
+				tempDir = new File(props.getProperty("dir.temp"));
+				destDir = new File(props.getProperty("dir.destination"));
+				
+				// TODO Some verification
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private void writeProperties() {
+		try {
+			File f = new File(System.getProperty("user.home"), ".stickloader");
+				Properties props = new Properties();
+				
+				props.setProperty("lame.path", lamePath);
+				props.setProperty("lame.args", lameArgs);
+				props.setProperty("dir.temp", tempDir.getCanonicalPath());
+				props.setProperty("dir.destination", destDir.getCanonicalPath());
+				
+				props.storeToXML(new FileOutputStream(f), "Properties of " + NAME + " v" +VERSION);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private void verifySettings() {
+		if (lameArgs == null) lameArgs = new LameArgsDialog("").getArgs();
+		if (tempDir == null) getTempDir();
+		if (destDir == null) getDestDir();
+		if (lamePath == null) getLamePath();
+	}
+	
 	
 	private void addDrop() {
 		DropTarget dropTarget = new DropTarget(sShell, DND.DROP_MOVE);
@@ -249,6 +303,8 @@ public class JMp3 {
 		GridData gridData11 = new GridData();
 		gridData11.grabExcessHorizontalSpace = true;
 		gridData11.verticalAlignment = org.eclipse.swt.layout.GridData.CENTER;
+		gridData11.grabExcessVerticalSpace = false;
+		gridData11.heightHint = -1;
 		gridData11.horizontalAlignment = org.eclipse.swt.layout.GridData.FILL;
 		GridData gridData3 = new GridData();
 		gridData3.horizontalAlignment = org.eclipse.swt.layout.GridData.END;
@@ -267,40 +323,151 @@ public class JMp3 {
 		GridLayout gridLayout = new GridLayout();
 		gridLayout.numColumns = 2;
 		sShell = new Shell(SWT.ON_TOP | SWT.SHELL_TRIM);
-		sShell.setText("JMp3");
-		sShell.setSize(new org.eclipse.swt.graphics.Point(217,159));
+		sShell.setText(NAME + " v" + VERSION);
+		sShell.setSize(new org.eclipse.swt.graphics.Point(217,183));
 		sShell.setLayout(gridLayout);
 		label = new Label(sShell, SWT.NONE);
 		label.setText("Encoding:");
-		label.setFont(new Font(Display.getDefault(), "Tahoma", 10, SWT.BOLD | SWT.ITALIC));
+		label.setFont(new Font(Display.getDefault(), "Tahoma", 8, SWT.BOLD | SWT.ITALIC));
 		label.setLayoutData(gridData1);
-		encodedFileNameLabel = new Label(sShell, SWT.NONE);
+		encodedFileNameLabel = new CLabel(sShell, SWT.NONE);
 		encodedFileNameLabel.setText("");
+		encodedFileNameLabel.setFont(new Font(Display.getDefault(), "Tahoma", 8, SWT.NORMAL));
 		encodedFileNameLabel.setLayoutData(gridData11);
-		encodedFilesLabel = new Label(sShell, SWT.CENTER);
+		encodedFilesLabel = new CLabel(sShell, SWT.CENTER);
 		encodedFilesLabel.setFont(new Font(Display.getDefault(), "Tahoma", 8, SWT.NORMAL));
 		encodedFilesLabel.setLayoutData(gridData);
 		encodingProgress = new ProgressBar(sShell, SWT.HORIZONTAL | SWT.SMOOTH);
 		encodingProgress.setLayoutData(gridData12);
 		label2 = new Label(sShell, SWT.NONE);
-		copyFileNameLabel = new Label(sShell, SWT.NONE);
+		copyFileNameLabel = new CLabel(sShell, SWT.NONE);
+		copyFileNameLabel.setFont(new Font(Display.getDefault(), "Tahoma", 8, SWT.NORMAL));
 		copyFileNameLabel.setLayoutData(gridData21);
 		label2.setLayoutData(gridData3);
 		label2.setText("Copying:");
-		label2.setFont(new Font(Display.getDefault(), "Tahoma", 10, SWT.BOLD | SWT.ITALIC));
-		copyFilesLabel = new Label(sShell, SWT.CENTER);
+		label2.setFont(new Font(Display.getDefault(), "Tahoma", 8, SWT.BOLD | SWT.ITALIC));
+		copyFilesLabel = new CLabel(sShell, SWT.CENTER);
 		copyFilesLabel.setFont(new Font(Display.getDefault(), "Tahoma", 8, SWT.NORMAL));
 		copyFilesLabel.setLayoutData(gridData2);
 		copyingProgress = new ProgressBar(sShell, SWT.HORIZONTAL | SWT.SMOOTH);
 		copyingProgress.setLayoutData(gridData22);
 		createComposite();
+		
+		// added by myself
+		sShell.setSize(sShell.getSize().x, sShell.computeSize(sShell.getSize().x, SWT.DEFAULT, false).y);
+		//add popup
+		menu = new Menu(sShell);
+		for (org.eclipse.swt.widgets.Control c : sShell.getChildren()) {
+			c.setMenu(menu);
+		}
+		sShell.setMenu(menu);
+		
+/*			createPopupMenu(sShell, SWT.NONE);
+		MenuItem popupMenuItem1 = createMenuItem(popup, SWT.PUSH, "&About", 
+		                                         null, -1, true, "doAbout");
+		MenuItem popupMenuItem2 = createMenuItem(popup, SWT.PUSH, "&Noop", 
+		                                         null, -1, true, "doNothing");	*/
+	}
+	
+	private Menu getPopupMenu() {
+		//Menu menu = new Menu(sShell);
+		
+		for (MenuItem item : menu.getItems()) {
+			item.dispose();
+		}
+		
+		MenuItem menuitem = new MenuItem(menu, SWT.None);
+		menuitem.setText("Set LAME path (" + lamePath + ")");
+		menuitem.addSelectionListener(new SelectionAdapter() {
+		
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				getLamePath();
+				menu = getPopupMenu();
+			}
+		
+		});
+		
+		MenuItem argsItem = new MenuItem(menu, SWT.None);
+		argsItem.setText("Set LAME arguments (" + lameArgs + ")");
+		argsItem.addSelectionListener(new SelectionAdapter() {
+			
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				lameArgs = new LameArgsDialog(lameArgs).getArgs();
+				encoder.setLameArgs(lameArgs);
+				menu = getPopupMenu();
+			}
+		});
+		
+		MenuItem menuitem2 = new MenuItem(menu, SWT.None);
+		menuitem2.setText("Set TEMP dir (" + tempDir.getAbsolutePath() + ")");
+		menuitem2.addSelectionListener(new SelectionAdapter() {
+		
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				getTempDir();
+				menu = getPopupMenu();
+			}
+		});
+		
+		MenuItem menuitem3 = new MenuItem(menu, SWT.None);
+		menuitem3.setText("Set destination dir (" + destDir.getAbsolutePath() + ")");
+		menuitem3.addSelectionListener(new SelectionAdapter() {
+		
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				getDestDir();
+				menu = getPopupMenu();
+			}
+		});
+		
+		return menu;
+	}
+	
+	public void getLamePath() {
+		FileDialog dia = new FileDialog(sShell, SWT.OPEN);
+		if (lamePath != null) dia.setFilterPath((encoder).getLamePath());
+		String filename = dia.open(); 
+		if (filename!=null) {
+			lamePath = filename;
+		    if (encoder != null) encoder.setLamePath(filename);
+		}
+	}
+	
+	public void getDestDir() {
+		DirectoryDialog dialog = new DirectoryDialog(sShell);
+		if (destDir != null) dialog.setFilterPath(destDir.getAbsolutePath());
+		dialog.setMessage("Please select the directory which you want to use as the destination directory (i.e. the mp3 player)");
+		String s = dialog.open();
+		if (s != null) {
+			destDir = new File(s);
+			if (copier != null) copier.setDestDir(destDir);
+		}
+	}
+	
+	public void getTempDir() {
+		DirectoryDialog dialog = new DirectoryDialog(sShell);
+		if (tempDir != null) dialog.setFilterPath(tempDir.getAbsolutePath());
+		dialog.setMessage("Please select the directory which you want to use as the temporary directory");
+		String s = dialog.open();
+		if (s != null) {					
+			tempDir = new File(s);
+			if (encoder != null) encoder.setDestDir(tempDir);
+			if (copier != null) copier.setTempDir(tempDir);
+		}
 	}
 	
 	public static void info(final String s) {
 		if (!theApp.sShell.isDisposed())
 		theApp.sShell.getDisplay().syncExec(new Runnable() {
 			public void run() {
-				theApp.debugList.add(s);
+				TableItem item = new TableItem(theApp.debugTable, SWT.NONE);
+				item.setText(s);
+				theApp.debugTable.showItem(item);
+				
+				//theApp.styledText.setText(s);
+				//theApp.debugList.add(s);
 			}
 		});
 	}
@@ -311,7 +478,10 @@ public class JMp3 {
 			public void run() {
 				//Color oldColor = theApp.debugList.getForeground();
 				//theApp.debugList.setForeground(theApp.sShell.getDisplay().getSystemColor(SWT.COLOR_RED));
-				theApp.debugList.add(s);
+				TableItem item = new TableItem(theApp.debugTable, SWT.NONE);
+				item.setForeground(theApp.sShell.getDisplay().getSystemColor(SWT.COLOR_RED));
+				item.setText(s);
+				theApp.debugTable.showItem(item);
 				//theApp.debugList.setForeground(oldColor);
 			}
 		});
@@ -340,23 +510,40 @@ public class JMp3 {
 	private void createComposite() {
 		GridData gridData4 = new org.eclipse.swt.layout.GridData();
 		gridData4.horizontalSpan = 2;
-		gridData4.verticalAlignment = org.eclipse.swt.layout.GridData.CENTER;
-		gridData4.grabExcessVerticalSpace = false;
+		gridData4.verticalAlignment = org.eclipse.swt.layout.GridData.FILL;
+		gridData4.grabExcessVerticalSpace = true;
 		gridData4.grabExcessHorizontalSpace = false;
 		gridData4.horizontalAlignment = org.eclipse.swt.layout.GridData.FILL;
 		composite = new ExpandableComposite(sShell, SWT.NONE, ExpandableComposite.TWISTIE);
 		composite.setExpanded(false);
 		composite.setText("Log");
+		composite.setFont(new Font(Display.getDefault(), "Tahoma", 8, SWT.NORMAL));
+		createTable();
 		composite.setLayoutData(gridData4);
-		debugList = new List(composite, SWT.V_SCROLL | SWT.BORDER);
-		debugList.setFont(new Font(Display.getDefault(), "Tahoma", 8, SWT.NORMAL));
-		composite.setExpanded(true);
-		composite.setClient(debugList);
+		composite.setClient(debugTable);
 		composite.addExpansionListener(new ExpansionAdapter() {
 			public void expansionStateChanged(ExpansionEvent arg0) {
-				sShell.pack();
+				if (arg0.getState()) sShell.setSize(sShell.getSize().x, sShell.getSize().y + backupTableSize);
+					else {
+						int before = sShell.getSize().y;
+						sShell.setSize(sShell.getSize().x, sShell.computeSize(sShell.getSize().x, SWT.DEFAULT, false).y);
+						int after = sShell.getSize().y;
+						backupTableSize = before - after;
+						if (backupTableSize < 100) backupTableSize = 100;
+					}
 			}
 		});
+	}
+
+	/**
+	 * This method initializes table	
+	 *
+	 */
+	private void createTable() {
+		debugTable = new Table(composite, SWT.NONE);
+		debugTable.setHeaderVisible(false);
+		debugTable.setFont(new Font(Display.getDefault(), "Tahoma", 8, SWT.NORMAL));
+		debugTable.setLinesVisible(false);
 	}
 
 	public static void main(String[] args) {
