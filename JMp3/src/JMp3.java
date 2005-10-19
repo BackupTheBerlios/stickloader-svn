@@ -4,6 +4,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.Properties;
 
+import javax.swing.ImageIcon;
+
 
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Label;
@@ -15,6 +17,7 @@ import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
@@ -361,6 +364,7 @@ public class JMp3 {
 			c.setMenu(menu);
 		}
 		sShell.setMenu(menu);
+		sShell.setImage(new Image(sShell.getDisplay(), "icon2.png"));
 		
 /*			createPopupMenu(sShell, SWT.NONE);
 		MenuItem popupMenuItem1 = createMenuItem(popup, SWT.PUSH, "&About", 
