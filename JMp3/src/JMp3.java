@@ -2,7 +2,9 @@
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.util.HashSet;
 import java.util.Properties;
+import java.util.Set;
 
 import javax.swing.ImageIcon;
 
@@ -34,13 +36,15 @@ public class JMp3 {
 	private static JMp3 theApp;
 	
 	final static public String NAME = "StickLoader";
-	final static public String VERSION = "0.1";
+	final static public String VERSION = "0.2";
 
 	private FileQueue encodingQueue;
 	private FileQueue copyQueue;
 	
 	private Mp3Encoder encoder;
 	private FileCopier copier;
+	
+	private Set<File> deleteSet = new HashSet<File>();
 	
 	private String lamePath;
 	private File tempDir;// = new File("D:\\temp");
@@ -95,6 +99,12 @@ public class JMp3 {
 		 
 		 //maybe closing
 		 writeProperties();
+		 try{
+			 Thread.sleep(5000);
+		 } catch (Exception e) {
+			 //...
+		 }
+		 System.exit(0); // now everything should be closed
 	}
 	
 	private void readProperties() {
@@ -214,6 +224,7 @@ public class JMp3 {
 						e.printStackTrace();
 					}
 				}
+				System.out.println("UIThread finished");
 			}
 		};
 	}
@@ -231,7 +242,7 @@ public class JMp3 {
 				while (!sShell.isDisposed()) {
 					if (copyQueue.isEmpty())
 						try {
-							sleep(1000);
+							sleep(100);
 						} catch (InterruptedException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
@@ -243,6 +254,7 @@ public class JMp3 {
 						else info("File failed: \"" + mp3.getSrcFile().getName() + "\"");
 					}
 				}
+				System.out.println("CopyThread finished");
 			};
 		};
 	}
@@ -275,6 +287,7 @@ public class JMp3 {
 						}
 					}
 				}
+				System.out.println("EncodeThread finished");
 			}
 		};
 	}

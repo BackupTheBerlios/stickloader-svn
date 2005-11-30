@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<jsmoothproject>
+<JVMSearchPath>registry</JVMSearchPath>
+<JVMSearchPath>javahome</JVMSearchPath>
+<JVMSearchPath>jrepath</JVMSearchPath>
+<JVMSearchPath>jdkpath</JVMSearchPath>
+<JVMSearchPath>exepath</JVMSearchPath>
+<JVMSearchPath>jview</JVMSearchPath>
+<classPath>dist\org.eclipse.core.runtime_3.1.0.jar</classPath>
+<classPath>dist\org.eclipse.jface_3.1.0.jar</classPath>
+<classPath>dist\org.eclipse.swt.win32.win32.x86_3.1.0.jar</classPath>
+<classPath>dist\org.eclipse.ui.forms_3.1.0.jar</classPath>
+<classPath>dist\stickloader.jar</classPath>
+<currentDirectory>jmp3.exe</currentDirectory>
+<embeddedJar>false</embeddedJar>
+<executableName>dist\jmp3.exe</executableName>
+<iconLocation>icon2.png</iconLocation>
+<initialMemoryHeap>-1</initialMemoryHeap>
+<mainClassName>JMp3</mainClassName>
+<maximumMemoryHeap>-1</maximumMemoryHeap>
+<maximumVersion></maximumVersion>
+<minimumVersion>1.5.0</minimumVersion>
+<skeletonName>Windowed Wrapper</skeletonName>
+<skeletonProperties>
+<key>Message</key>
+<value>Java has not been found on your computer. Do you want to download it?</value>
+</skeletonProperties>
+<skeletonProperties>
+<key>URL</key>
+<value>http://www.java.com</value>
+</skeletonProperties>
+<skeletonProperties>
+<key>SingleProcess</key>
+<value>1</value>
+</skeletonProperties>
+<skeletonProperties>
+<key>Debug</key>
+<value>0</value>
+</skeletonProperties>
+</jsmoothproject>

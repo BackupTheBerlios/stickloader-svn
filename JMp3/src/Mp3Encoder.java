@@ -39,7 +39,10 @@ public class Mp3Encoder implements FileProcessor {
 
 	public boolean processFile(Mp3File file) {
 		File targetDir = new File(destDir, file.getPath());
-		if (!targetDir.exists()) targetDir.mkdirs();
+		if (!targetDir.exists()) {
+			targetDir.mkdirs();
+			targetDir.deleteOnExit();
+		}
 		File targetFile = new File(targetDir, file.getSrcFile().getName());
 		
 		filename = targetFile.getName();

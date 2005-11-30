@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+groer08<?xml version="1.0"?>
 
 <project default="dist" name="StickLoader" basedir=".">
 
@@ -36,18 +36,24 @@
 
 
    <target name="dist" depends="compile" >
-   	<delete dir="${dist.dir}" includeemptydirs="true" />
    	
+   	<delete dir="${dist.dir}/*" includeemptydirs="true" failonerror="false" />
+
    	<copy todir="${dist.dir}">
    		<fileset dir="${libs.dir}" includes="**/*" />
+   		<fileset dir="." includes="**/*.png" />
    	</copy>
 
    	<jar destfile="${dist.dir}/stickloader.jar" basedir="${build.dir}" excludes="${dist.jar.excludes}">
          <manifest>
             <attribute name="Main-Class" value="JMp3" />
-            <attribute name="Class-Path" value="jmp3.jar org.eclipse.swt.win32.win32.x86_3.1.0.jar org.eclipse.jface_3.1.0.jar org.eclipse.ui.forms_3.1.0.jar" />
+            <attribute name="Class-Path" value="jmp3.jar swt.jar org.eclipse.jface_3.1.0.jar org.eclipse.ui.forms_3.1.0.jar" />
          </manifest>
       </jar>
+   	
+	<exec executable="c:\Programme\JSmooth 0.9.7\jsmoothcmd.exe" >
+   	    <arg value="jmp3.jsmooth"/>
+   	</exec>
    	
    	<zip basedir="${dist.dir}" destfile="${dist.dir}/stickloader-${DSTAMP}.zip" />
    </target>

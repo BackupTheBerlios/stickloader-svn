@@ -62,12 +62,13 @@ public class FileCopier implements FileProcessor {
 				while ((length = in.read(buffer)) >= 0) {
 					out.write(buffer, 0, length);
 					pos += length;
-					progress = 100 * (int)(pos/max);
+					progress = (int) (100*pos/max);
 				}
 				in.close();
 				out.flush();
 				out.close();
 				totalCop++;
+				srcFile.delete();
 				filename = "NOTHING";
 				return true;
 			} catch (FileNotFoundException exc) {
