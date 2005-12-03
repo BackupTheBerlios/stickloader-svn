@@ -1,0 +1,105 @@
+<?xml version="1.0"?>
+
+<project default="dist" name="StickLoader" basedir=".">
+
+    <tstamp/>
+	
+   <property name="libs.dir" value="libs" />
+   <property name="dist.dir" value="dist" />
+   <property name="build.dir" value="build" />
+   <property name="src.dir" value="src" />
+	
+   <property name="version" value="0.3" />
+<!--	<property name="version" value="${DSTAMP}${TSTAMP}" /> -->
+   
+   <property name="generic.excludes" value="**/*.jar **/*.txt" />
+   <property name="dist.jar.excludes" value="${generic.excludes} **/*.java " />
+   <!-- <property name="dist.source.excludes" value="${generic.excludes} **/*.class" /> -->
+   
+   
+   <target name="init" >
+      <echo message="Building JMp3..." />
+
+   	<delete dir="${build.dir}" includeemptydirs="true" />  	
+   	<mkdir dir="${build.dir}" />
+
+      <!-- <condition property="libs.dir" value="build/libs">
+         <not>  <isset property="libs.dir" />  </not>
+      </condition> -->
+       
+      <mkdir dir="${dist.dir}" />
+   </target>
+
+   
+   <target name="compile" depends="init" >
+      <path id="libs.classpath">
+         <fileset dir="${libs.dir}" includes="**/*.jar" />
+      </path>
+   
+      <javac srcdir="." destdir="${build.dir}" nowarn="yes" source="1.5" target="1.5" includeAntRuntime="no" >
+         <classpath refid="libs.classpath" />
+      </javac>
+   </target>
+
+
+   <target name="dist" depends="compile" >
+   	
+   	<delete dir="${dist.dir}" includeemptydirs="true" />
+   	
+   	<mkdir dir="${dist.dir}" />
+
+   	<copy todir="${dist.dir}">
+   		<fileset dir="${src.dir}" includes="**/*.png" />
+   		<fileset dir="${build.dir}" />
+   	</copy>
+
+   	<jar destfile="${dist.dir}/stickloader.jar" basedir="${dist.dir}" excludes="${dist.jar.excludes}">
+         <manifest>
+            <attribute name="Main-Class" value="de.berlios.stickloader.StickLoader" />
+            <attribute name="Class-Path" value="jmp3.jar swt.jar org.eclipse.jface_3.1.0.jar org.eclipse.ui.forms_3.1.0.jar" />
+         </manifest>
+      </jar>
+
+   	<copy todir="${dist.dir}">
+   		<fileset dir="${libs.dir}" includes="**/*" />
+   	</copy>
+
+   	
+	<exec executable="c:\Programme\JSmooth 0.9.7\jsmoothcmd.exe" >
+   	    <arg value="jmp3.jsmooth"/>
+   	</exec>
+   	
+   	<zip destfile="${dist.dir}/stickloader-${version}-win.zip"
+   	       basedir="${dist.dir}"
+   	       includes="*.jar *.dll *.exe"
+   	  />
+   	
+   	<zip destfile="${dist.dir}/stickloader-${version}-win-nowswt.zip"
+   	   	       basedir="${dist.dir}"
+   	   	       includes="sticklooader.jar *.dll *.exe"
+   	   	  />
+   	
+   	<zip destfile="${dist.dir}/stickloader-${version}-bin.zip"
+   	   	   	       basedir="${dist.dir}"
+   	   	   	       includes="*.jar"
+   				   excludes="swt.jar"
+   	   	   	  />
+   	
+   	<zip destfile="${dist.dir}/stickloader-${version}-src.zip"
+   	       basedir="."
+   		   excludes="build/** dist/** **.class bin/**"
+   	  />
+   	
+   	<delete dir="${dist.dir}" excludes="*.zip" includeemptydirs="true"/> 
+   	
+   </target>
+	
+   <target name="clean" >
+      <delete quiet="true" >
+         <fileset dir="${build}" includes="**/*.class"/>
+      </delete>
+      
+      <delete dir="${dist.dir}" />
+   </target>
+
+</project>
