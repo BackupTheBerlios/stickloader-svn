@@ -47,7 +47,6 @@ public class LameArgsDialog {
 	private Button radioExpert = null;
 	private Text textArgs = null;
 	private String args = "";  //  @jve:decl-index=0:
-	private CLabel cLabel = null;
 	private Button checkBoxFast = null;
 	private Scale scaleBitRate = null;
 	private Label labelBitRate = null;
@@ -62,10 +61,10 @@ public class LameArgsDialog {
 	public final String STANDARD_QUALITY = "Default";
 	public final String FAST_QUALITY = "Fast, but low quality";
 	
-	public final String PRESET_MEDIUM = "Medium quality";
-	public final String PRESET_STANDARD = "Standard quality";
-	public final String PRESET_EXTREME = "Very high quality (extreme)";  //  @jve:decl-index=0:
-	public final String PRESET_INSANE = "Highest quality (insane, CBR@320 kbps)";
+	public final String PRESET_MEDIUM = "Medium quality (approx. 165 kbps)";
+	public final String PRESET_STANDARD = "Standard quality (approx. 190 kbps)";
+	public final String PRESET_EXTREME = "Very high quality (extreme, ~245 kbps)";  //  @jve:decl-index=0:
+	public final String PRESET_INSANE = "Highest quality (insane, 320 kbps)";
 	
 	private Combo comboPresets = null;
 	private Button radioVbr = null;
@@ -112,9 +111,7 @@ public class LameArgsDialog {
 		gridData27.heightHint = -1;
 		gridData27.horizontalAlignment = GridData.FILL;
 		GridData gridData8 = new GridData();
-		gridData8.horizontalSpan = 2;
-		GridData gridData61 = new GridData();
-		gridData61.widthHint = 20;
+		gridData8.horizontalSpan = 3;
 		GridData gridData5 = new GridData();
 		gridData5.horizontalSpan = 3;
 		GridData gridData4 = new GridData();
@@ -147,12 +144,6 @@ public class LameArgsDialog {
 						updateUI();
 					}
 				});
-		cLabel = new CLabel(sShell, SWT.NONE);
-		cLabel.setText(" ");
-		cLabel.setLayoutData(gridData61);
-		checkBoxFast = new Button(sShell, SWT.CHECK);
-		checkBoxFast.setText("Faster encoding (only for VBR presets)");
-		checkBoxFast.setLayoutData(gridData8);
 		cLabel2 = new CLabel(sShell, SWT.NONE);
 		cLabel2.setText("Specify quality/bit rate:");
 		cLabel2.setLayoutData(gridData31);
@@ -209,6 +200,9 @@ public class LameArgsDialog {
 		labelBitRate.setText("128 kbps");
 
 		labelBitRate.setLayoutData(gridData2);
+		checkBoxFast = new Button(sShell, SWT.CHECK);
+		checkBoxFast.setText("Faster encoding (only for VBR)");
+		checkBoxFast.setLayoutData(gridData8);
 		label1 = new Label(sShell, SWT.NONE);
 		Label filler2 = new Label(sShell, SWT.NONE);
 		createComboQuality();
@@ -256,11 +250,12 @@ public class LameArgsDialog {
 	 */
 	private int updateScale() {
 		if (radioVbr.getSelection()) {
+			int [] bitrates = new int [] {245, 225, 190, 175, 165, 130, 115, 100, 85, 65};
 			int quality = scaleBitRate.getSelection()/10;
-			String labelText = ""+quality;
+			String labelText = quality+ (" (~" + bitrates[quality] + " kbps)");
 			
-			if (quality == 0) labelText += " (best)";
-			if (quality == 9) labelText += " (fastest)";			
+			//if (quality == 0) labelText += " (best)";
+			//if (quality == 9) labelText += " (fastest)";			
 			
 			labelBitRate.setText(labelText);
 			return quality;
@@ -280,15 +275,25 @@ public class LameArgsDialog {
 	
 	private void updateUI() {
 		String args = "";
+		
+		// Disabled by default
+		checkBoxFast.setEnabled(false);
 			
 		if (!radioABR.getSelection() && !radioCbr.getSelection() && !radioVbr.getSelection()) scaleBitRate.setEnabled(false);
 			else {
 				if (!radioVbr.getSelection()) args += "--preset ";
-					else args += "-V "; 
+					else {
+						args += "-V ";
+						checkBoxFast.setEnabled(true);
+					}
 				scaleBitRate.setEnabled(true);
 				if (radioCbr.getSelection()) args += "cbr ";
 				args += updateScale() + " ";
 			}
+		
+		if (radioVbr.getSelection() && checkBoxFast.isEnabled()) {
+			args += "--vbr-new ";
+		}
 		
 		if (radioPresets.getSelection()) {
 			args += "--preset ";
@@ -301,7 +306,6 @@ public class LameArgsDialog {
 			if (comboPresets.getText().equals(PRESET_INSANE)) args += "insane ";			
 		} else {
 			comboPresets.setEnabled(false);
-			checkBoxFast.setEnabled(false);
 		}
 			
 		if (comboQuality.getText().equals(HIGH_QUALITY)) args += "-h ";

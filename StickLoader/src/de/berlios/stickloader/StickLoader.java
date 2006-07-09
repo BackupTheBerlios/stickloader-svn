@@ -73,6 +73,7 @@ public class StickLoader {
 	private File tempDir;// = new File("D:\\temp");  //  @jve:decl-index=0:
 	private File destDir;// = new File("D:\\target");
 	private String lameArgs = ""; // Defaultvalue
+	//TODO: Put all lameArgs in one Vector
 	
 	private Shell sShell = null;  //  @jve:decl-index=0:visual-constraint="182,38"
 	private Label label = null;
