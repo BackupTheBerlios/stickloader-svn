@@ -37,6 +37,7 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
@@ -81,6 +82,7 @@ public class StickLoader {
 	private CLabel copyFileNameLabel = null;
 	private CLabel copyFilesLabel = null;
 	private Menu menu = null;
+	private LameArgsDialog lameArgsDialog;
 	
 	//boolean running;
 	private ProgressBar encodingProgress = null;
@@ -91,7 +93,7 @@ public class StickLoader {
 	
 	private int backupTableSize = 100;
 	
-	private static boolean DEBUG = false;
+	public static boolean DEBUG = true;
 
 	public StickLoader() {
 		theApp = this;
@@ -290,7 +292,7 @@ public class StickLoader {
 						debug("copyQueue not empty");
 						Mp3File mp3 = copyQueue.poll();						
 						if (copier.processFile(mp3)) info("File copied: \"" + mp3.getSrcFile().getName() + "\"");
-						else info("File failed: \"" + mp3.getSrcFile().getName() + "\"");
+						else error("Copy failed: \"" + mp3.getSrcFile().getName() + "\"");
 					}
 				}
 				System.out.println("CopyThread finished");
@@ -338,7 +340,7 @@ public class StickLoader {
 									//egal...
 								}
 								
-								encoder.setLameArgs(lameArgs + tempArgs);
+								encoder.setLameArgs(lameArgs.trim() + " " + tempArgs);
 							} catch (Exception e) {
 								debug("Exception while reading ID3: " + e.getMessage());
 								e.printStackTrace();
@@ -349,7 +351,7 @@ public class StickLoader {
 							copyQueue.addFile(mp3);
 							info("File encoded: \"" + mp3.getSrcFile().getName() + "\"");
 						} else {
-							info("File failed: " + mp3.getSrcFile().getName() + "\"");
+							error("Encoding failed: " + mp3.getSrcFile().getName() + "\"");
 						}
 						encoder.setLameArgs(lameArgs); // reset lame args
 					}
@@ -499,7 +501,23 @@ public class StickLoader {
 			
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				lameArgs = new LameArgsDialog(lameArgs).getArgs();
+				if (lameArgsDialog == null) {
+					// don't put dialog under main window
+					int x = 10, y = 100;
+					int displayWidth = sShell.getDisplay().getBounds().width;
+					int displayHeight = sShell.getDisplay().getBounds().height;
+					if (sShell.getBounds().x > displayWidth/2) {
+						// sShell right, dialog left
+						x = 100;
+					} else {
+						x = sShell.getBounds().x + sShell.getBounds().width + 50;
+						if (sShell.getBounds().y < displayHeight/2) y = sShell.getBounds().y;
+					}
+					lameArgsDialog = new LameArgsDialog(lameArgs, x, y);
+				}
+				
+				lameArgsDialog.show();
+				lameArgs = lameArgsDialog.getArgs();
 				encoder.setLameArgs(lameArgs);
 				menu = getPopupMenu();
 			}
@@ -635,18 +653,23 @@ public class StickLoader {
 	}
 	
 	public static void debug(final String s) {
-		if (!theApp.sShell.isDisposed() && DEBUG)
-		theApp.sShell.getDisplay().syncExec(new Runnable() {
-			public void run() {
-				//Color oldColor = theApp.debugList.getForeground();
-				//theApp.debugList.setForeground(theApp.sShell.getDisplay().getSystemColor(SWT.COLOR_RED));
-				TableItem item = new TableItem(theApp.debugTable, SWT.NONE);
-				item.setForeground(theApp.sShell.getDisplay().getSystemColor(SWT.COLOR_GREEN));
-				item.setText(s);
-				theApp.debugTable.showItem(item);
-				//theApp.debugList.setForeground(oldColor);
+		if (DEBUG) {
+			if (!theApp.sShell.isDisposed()) {
+				theApp.sShell.getDisplay().syncExec(new Runnable() {
+					public void run() {
+						//Color oldColor = theApp.debugList.getForeground();
+						//theApp.debugList.setForeground(theApp.sShell.getDisplay().getSystemColor(SWT.COLOR_RED));
+						TableItem item = new TableItem(theApp.debugTable, SWT.NONE);
+						item.setForeground(theApp.sShell.getDisplay().getSystemColor(SWT.COLOR_GREEN));
+						item.setText(s);
+						theApp.debugTable.showItem(item);
+						//theApp.debugList.setForeground(oldColor);
+					}
+				});
 			}
-		});
+			System.out.println("DEBUG: " + s);
+		}
+		
 	}
 	
 	public static void error(final String s) {

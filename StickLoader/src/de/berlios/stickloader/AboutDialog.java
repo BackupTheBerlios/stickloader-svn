@@ -29,6 +29,7 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.graphics.Point;
 
 public class AboutDialog {
 
@@ -38,17 +39,22 @@ public class AboutDialog {
 	private Text textArea = null;
 	private Button button = null;
 	private Label label = null;
-	private Label label1 = null;
 	private Label link = null;
+	private Label labelLame = null;
 
 	/**
 	 * This method initializes sShell
 	 */
 	private void createSShell() {
+		GridData gridData11 = new GridData();
+		gridData11.horizontalAlignment = GridData.BEGINNING;
+		gridData11.grabExcessHorizontalSpace = true;
+		gridData11.grabExcessVerticalSpace = true;
+		gridData11.verticalAlignment = GridData.END;
 		GridData gridData2 = new org.eclipse.swt.layout.GridData();
-		gridData2.horizontalAlignment = org.eclipse.swt.layout.GridData.END;
+		gridData2.horizontalAlignment = GridData.END;
 		gridData2.widthHint = 100;
-		gridData2.verticalAlignment = org.eclipse.swt.layout.GridData.CENTER;
+		gridData2.verticalAlignment = GridData.END;
 		GridData gridData1 = new org.eclipse.swt.layout.GridData();
 		gridData1.verticalSpan = 2;
 		GridData gridData = new org.eclipse.swt.layout.GridData();
@@ -59,10 +65,10 @@ public class AboutDialog {
 		gridData.verticalAlignment = org.eclipse.swt.layout.GridData.FILL;
 		GridLayout gridLayout = new GridLayout();
 		gridLayout.numColumns = 2;
-		sShell = new Shell(SWT.PRIMARY_MODAL | SWT.DIALOG_TRIM);
+		sShell = new Shell(SWT.DIALOG_TRIM);
 		sShell.setText("About Stickloader");
 		sShell.setLayout(gridLayout);
-		sShell.setSize(new org.eclipse.swt.graphics.Point(533,327));
+		sShell.setSize(new Point(533, 381));
 		icon = new Label(sShell, SWT.NONE);
 		icon.setText("Label");
 		icon.setLayoutData(gridData1);
@@ -71,10 +77,11 @@ public class AboutDialog {
 		name.setText(StickLoader.NAME + " v" + StickLoader.VERSION);
 		name.setFont(new Font(Display.getDefault(), "Tahoma", 18, SWT.BOLD));
 		textArea = new Text(sShell, SWT.MULTI | SWT.WRAP | SWT.READ_ONLY);
-		textArea.setText("Copyright (C) 2005 Alexander Kaiser\n\n" +
+		textArea.setText("Copyright (C) 2005, 2006 Alexander Kaiser\n\n" +
 				"This program includes software developed by the Eclipse Foundation (http://www.eclipse.org) (c) 2000-2005 Eclipse contributors and others.\n" +
 				"The icon is taken from the Nuvola Icon Theme (c) 2004-2005 VIGNONI DAVID (http://www.icon-king.com)\n" +
-				"For ID3 functionality mp3info by Florian Heer (http://www.ueberdosis.de/java/id3.html) is used.\n"+
+				"For ID3 functionality mp3info by Florian Heer (http://www.ueberdosis.de/java/id3.html) is used.\n" +
+				"LAME (http://lame.sf.net) is used for MP3 file encoding.\n"+
 				"\n" +
 				"This program is free software; you can redistribute " +
 				"it and/or modify it under the terms of the GNU General " +
@@ -90,7 +97,10 @@ public class AboutDialog {
 		label = new Label(sShell, SWT.NONE);
 		link = new Label(sShell, SWT.NONE);
 		link.setText("Project homepage: http://stickloader.berlios.de");
-		label1 = new Label(sShell, SWT.NONE);
+		labelLame = new Label(sShell, SWT.NONE);
+		labelLame.setText("");
+		labelLame.setLayoutData(gridData11);
+		labelLame.setImage(new Image(Display.getCurrent(), getClass().getResourceAsStream("/de/berlios/stickloader/resources/lamelogo.png")));
 		button = new Button(sShell, SWT.NONE);
 		button.setText("OK");
 		button.setLayoutData(gridData2);

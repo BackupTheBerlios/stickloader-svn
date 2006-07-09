@@ -63,7 +63,7 @@ public class Mp3Encoder implements FileProcessor {
 	}
 	
 	public void setLameArgs(String s) {
-		this.args = parseArgs("--priority --nohist --disptime 0.5 " + s);
+		this.args = parseArgs("--priority --nohist --disptime 0.5 " + s.trim() + " ");
 	}
 
 	public boolean processFile(Mp3File file) {
@@ -109,8 +109,8 @@ public class Mp3Encoder implements FileProcessor {
 									targetFile.delete();
 									return;
 								}
-								err = error.readLine();
-								//System.out.println(err);
+								if (StickLoader.DEBUG) err = error.readLine();
+								System.out.println(err);
 								for (String s : err.split("[()]")) {
 									if (s.endsWith("%")) {
 										try {
@@ -130,7 +130,8 @@ public class Mp3Encoder implements FileProcessor {
 				}
 			};
 			myThread.start();			
-			ps.waitFor(); //TODO: Should we wait here??
+			int returnValue = ps.waitFor();
+			//System.out.println("LAME return: " + ps.waitFor());
 				
 			if (!cancelNow) totalEnc++;
 			filename = "NOTHING";
@@ -139,7 +140,7 @@ public class Mp3Encoder implements FileProcessor {
 				progress = 0;
 				return false; 
 			}
-			else return true;
+			else return (returnValue == 0);
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
