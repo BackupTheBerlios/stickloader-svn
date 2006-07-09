@@ -17,25 +17,30 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
 package de.berlios.stickloader;
 
-import java.util.LinkedList;
-
-public class FileQueue extends LinkedList<Mp3File> {
+public class Utils {
 	
-	private static final long serialVersionUID = -1233639093117918185L;
-
-	public int getFiles() {
-		return size();
+	public static boolean isWindows() {
+		return System.getProperty("os.name").toLowerCase().contains("windows");
 	}
 	
-	public Mp3File getNextFile() {
-		return poll();
+	public static boolean isLinux() {
+		return System.getProperty("os.name").toLowerCase().contains("linux");
 	}
 	
-	public void addFile(Mp3File file) {
-		add(file);
+	public static boolean isOSX() {
+		return System.getProperty("os.name").toLowerCase().contains("osx") || 
+			   System.getProperty("os.name").toLowerCase().contains("os x");
 	}
-
+	
+	public static boolean isExecutable(String fileName) {
+		try {
+			Runtime.getRuntime().exec(fileName).waitFor();
+			return true;
+		} catch (Exception e) {
+			// exception -> filename is not executable
+			return false;
+		}
+	}
 }

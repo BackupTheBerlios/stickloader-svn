@@ -24,6 +24,11 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.RandomAccessFile;
+
+import de.ueberdosis.mp3info.ID3Reader;
+import de.ueberdosis.mp3info.ID3Tag;
+import de.ueberdosis.mp3info.ID3Writer;
 
 public class Mp3Encoder implements FileProcessor {
 
@@ -62,6 +67,7 @@ public class Mp3Encoder implements FileProcessor {
 	}
 
 	public boolean processFile(Mp3File file) {
+		
 		cancelNow = false;
 		File targetDir = new File(destDir, file.getPath());
 		if (!targetDir.exists()) {
@@ -81,7 +87,6 @@ public class Mp3Encoder implements FileProcessor {
 			newargs[args.length+2] = targetFile.getAbsolutePath();
 			
 			final Process ps = Runtime.getRuntime().exec(newargs);
-			
 			
 			//Process ps = Runtime.getRuntime().exec(new String [] { lamePath, "--priority", "--nohist", "--disptime", "0.5", "-f", "--abr", "100", , targetFile.getAbsolutePath()});
 			//final BufferedReader input = new BufferedReader(new InputStreamReader(ps.getInputStream()));
@@ -105,10 +110,11 @@ public class Mp3Encoder implements FileProcessor {
 									return;
 								}
 								err = error.readLine();
+								//System.out.println(err);
 								for (String s : err.split("[()]")) {
 									if (s.endsWith("%")) {
 										try {
-											progress = Integer.parseInt(s.replace("%", ""));
+											progress = Integer.parseInt(s.trim().replace("%", ""));
 										} catch (Exception e) {
 											//...
 										}
@@ -125,11 +131,15 @@ public class Mp3Encoder implements FileProcessor {
 			};
 			myThread.start();			
 			ps.waitFor(); //TODO: Should we wait here??
-			
+				
 			if (!cancelNow) totalEnc++;
 			filename = "NOTHING";
 			myThread.interrupt();
-			if (cancelNow) return false; else return true;
+			if (cancelNow) {
+				progress = 0;
+				return false; 
+			}
+			else return true;
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

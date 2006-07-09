@@ -23,9 +23,8 @@ package de.berlios.stickloader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.util.HashSet;
+import java.io.RandomAccessFile;
 import java.util.Properties;
-import java.util.Set;
 
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Label;
@@ -53,11 +52,15 @@ import org.eclipse.ui.forms.events.ExpansionEvent;
 import org.eclipse.ui.forms.widgets.ExpandableComposite;
 import org.eclipse.swt.widgets.Table;
 
+import de.ueberdosis.mp3info.ID3Reader;
+import de.ueberdosis.mp3info.ID3Tag;
+import de.ueberdosis.mp3info.ID3Writer;
+
 public class StickLoader {
 	private static StickLoader theApp;
 	
 	final static public String NAME = "StickLoader";
-	final static public String VERSION = "0.3";
+	final static public String VERSION = "0.5";
 
 	private FileQueue encodingQueue;
 	private FileQueue copyQueue;
@@ -65,10 +68,8 @@ public class StickLoader {
 	private Mp3Encoder encoder;
 	private FileCopier copier;
 	
-	private Set<File> deleteSet = new HashSet<File>();
-	
-	private String lamePath;
-	private File tempDir;// = new File("D:\\temp");
+	private String lamePath;  //  @jve:decl-index=0:
+	private File tempDir;// = new File("D:\\temp");  //  @jve:decl-index=0:
 	private File destDir;// = new File("D:\\target");
 	private String lameArgs = ""; // Defaultvalue
 	
@@ -90,7 +91,7 @@ public class StickLoader {
 	
 	private int backupTableSize = 100;
 	
-	private static boolean debugAllowed = false;
+	private static boolean DEBUG = false;
 
 	public StickLoader() {
 		theApp = this;
@@ -115,6 +116,9 @@ public class StickLoader {
 		getEncodeThread().start();
 		getCopyThread().start();
 		getUIThread().start();
+		
+		debug(System.getProperty("user.dir"));
+		debug(lamePath);
 		
 		 while (!sShell.isDisposed()) {
 			 if (!sShell.getDisplay().readAndDispatch ()) sShell.getDisplay().sleep ();
@@ -166,10 +170,22 @@ public class StickLoader {
 	}
 	
 	private void verifySettings() {
-		if (lameArgs == null) lameArgs = new LameArgsDialog("").getArgs();
-		if (tempDir == null) getTempDir();
+		if (lameArgs == null) lameArgs = "";
+		if (tempDir == null) {
+			tempDir = new File(System.getProperty("java.io.tmpdir"));
+		}
 		if (destDir == null) getDestDir();
-		if (lamePath == null) getLamePath();
+		if (destDir == null) destDir = new File(".");
+		if (lamePath != null) {
+			if (!Utils.isExecutable(lamePath)) lamePath = null;
+		} 
+		if (lamePath == null) {
+			if (new File(System.getProperty("user.dir"), "lame.exe").exists()) {
+				lamePath = new File(System.getProperty("user.dir"), "lame.exe").getAbsolutePath();
+			} else if (Utils.isExecutable("lame")) lamePath = "lame";
+			else getLamePath();
+		}
+		if (lamePath == null) lamePath= "";
 	}
 	
 	
@@ -302,12 +318,40 @@ public class StickLoader {
 						}
 					else {
 						Mp3File mp3 = encodingQueue.poll();
-						if (encoder.processFile(mp3)) {
+						// copy id3-tag
+						if (mp3.getSrcFile().getName().endsWith(".mp3")) {
+							try {
+								ID3Tag tag = ID3Reader.readTag(new RandomAccessFile(mp3.getSrcFile(), "r" ));
+								
+								// set temporary lameArgs
+								String tempArgs = "";
+
+								if (!tag.getTitle().trim().equals("")) tempArgs += "--tt \"" + tag.getTitle() + "\" ";
+								if (!tag.getArtist().trim().equals("")) tempArgs += "--ta \"" + tag.getArtist() + "\" "; 
+								if (!tag.getAlbum().trim().equals("")) tempArgs += "--tl \"" + tag.getAlbum() + "\" ";
+								if (!tag.getYear().trim().equals("")) tempArgs += "--ty \"" + tag.getYear() + "\" ";
+								if (!tag.getComment().trim().equals("")) tempArgs += "--tc \"" + tag.getComment() + "\" ";
+								if (!tag.getTrackS().trim().equals("")) tempArgs += "--tn \"" + tag.getTrackS() + "\" ";
+								try {
+									if (!tag.getGenreS().trim().equals("")) tempArgs += "--tg \"" + tag.getGenreS() + "\" ";
+								} catch (ArrayIndexOutOfBoundsException e) {
+									//egal...
+								}
+								
+								encoder.setLameArgs(lameArgs + tempArgs);
+							} catch (Exception e) {
+								debug("Exception while reading ID3: " + e.getMessage());
+								e.printStackTrace();
+							}
+						}
+
+						if (encoder.processFile(mp3)) {							
 							copyQueue.addFile(mp3);
 							info("File encoded: \"" + mp3.getSrcFile().getName() + "\"");
 						} else {
 							info("File failed: " + mp3.getSrcFile().getName() + "\"");
 						}
+						encoder.setLameArgs(lameArgs); // reset lame args
 					}
 				}
 				System.out.println("EncodeThread finished");
@@ -361,7 +405,14 @@ public class StickLoader {
 		gridData.horizontalAlignment = org.eclipse.swt.layout.GridData.FILL;
 		GridLayout gridLayout = new GridLayout();
 		gridLayout.numColumns = 2;
-		sShell = new Shell(SWT.ON_TOP | SWT.SHELL_TRIM);
+
+		// ON_TOP does not work on Linux
+		int shellProperties;
+		if (Utils.isWindows()) 
+			shellProperties = SWT.ON_TOP | SWT.SHELL_TRIM;
+		 else shellProperties = SWT.SHELL_TRIM;
+
+		sShell = new Shell(shellProperties);
 		sShell.setText(NAME + " v" + VERSION);
 		sShell.setImage(new Image(Display.getCurrent(), getClass().getResourceAsStream("/de/berlios/stickloader/resources/icon.png")));
 		sShell.setSize(new org.eclipse.swt.graphics.Point(217,183));
@@ -430,9 +481,9 @@ public class StickLoader {
 			item.dispose();
 		}
 		
-		MenuItem menuitem = new MenuItem(menu, SWT.None);
-		menuitem.setText("Set LAME path (" + lamePath + ")");
-		menuitem.addSelectionListener(new SelectionAdapter() {
+		MenuItem menuItemLamePath = new MenuItem(menu, SWT.None);
+		menuItemLamePath.setText("Set LAME path (" + lamePath + ")");
+		menuItemLamePath.addSelectionListener(new SelectionAdapter() {
 		
 			@Override
 			public void widgetSelected(SelectionEvent e) {
@@ -442,9 +493,9 @@ public class StickLoader {
 		
 		});
 		
-		MenuItem argsItem = new MenuItem(menu, SWT.None);
-		argsItem.setText("Set LAME arguments (" + lameArgs + ")");
-		argsItem.addSelectionListener(new SelectionAdapter() {
+		MenuItem menuItemLameArgs = new MenuItem(menu, SWT.None);
+		menuItemLameArgs.setText("Set LAME arguments (" + lameArgs + ")");
+		menuItemLameArgs.addSelectionListener(new SelectionAdapter() {
 			
 			@Override
 			public void widgetSelected(SelectionEvent e) {
@@ -454,9 +505,9 @@ public class StickLoader {
 			}
 		});
 		
-		MenuItem menuitem2 = new MenuItem(menu, SWT.None);
-		menuitem2.setText("Set TEMP dir (" + tempDir.getAbsolutePath() + ")");
-		menuitem2.addSelectionListener(new SelectionAdapter() {
+		MenuItem menuItemTempDir = new MenuItem(menu, SWT.None);
+		menuItemTempDir.setText("Set TEMP dir (" + tempDir.getAbsolutePath() + ")");
+		menuItemTempDir.addSelectionListener(new SelectionAdapter() {
 		
 			@Override
 			public void widgetSelected(SelectionEvent e) {
@@ -465,9 +516,9 @@ public class StickLoader {
 			}
 		});
 		
-		MenuItem menuitem3 = new MenuItem(menu, SWT.None);
-		menuitem3.setText("Set destination dir (" + destDir.getAbsolutePath() + ")");
-		menuitem3.addSelectionListener(new SelectionAdapter() {
+		MenuItem menuItemDestDir = new MenuItem(menu, SWT.None);
+		menuItemDestDir.setText("Set destination dir (" + destDir.getAbsolutePath() + ")");
+		menuItemDestDir.addSelectionListener(new SelectionAdapter() {
 		
 			@Override
 			public void widgetSelected(SelectionEvent e) {
@@ -476,25 +527,39 @@ public class StickLoader {
 			}
 		});
 		
-		MenuItem menuitemcancel = new MenuItem(menu, SWT.NONE);
-		menuitemcancel.setText("Cancel processes");
-		menuitemcancel.addSelectionListener(new SelectionAdapter() {
+		new MenuItem(menu, SWT.SEPARATOR);
+		
+		MenuItem menuItemCancel = new MenuItem(menu, SWT.NONE);
+		menuItemCancel.setText("Cancel processes");
+		menuItemCancel.addSelectionListener(new SelectionAdapter() {
 			
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				cancel();
-				menu = getPopupMenu();
 			}
 		});
 		
-		MenuItem menuitemabout = new MenuItem(menu, SWT.NONE);
-		menuitemabout.setText("About Stickloader...");
-		menuitemabout.addSelectionListener(new SelectionAdapter() {
+		new MenuItem(menu, SWT.SEPARATOR);
+		
+		MenuItem menuItemAbout = new MenuItem(menu, SWT.NONE);
+		menuItemAbout.setText("About Stickloader...");
+		menuItemAbout.addSelectionListener(new SelectionAdapter() {
 			
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				new AboutDialog().show();
-				menu = getPopupMenu();
+			}
+		});
+		
+		new MenuItem(menu, SWT.SEPARATOR);
+		
+		MenuItem menuItemClose = new MenuItem(menu, SWT.NONE);
+		menuItemClose.setText("Close StickLoader");
+		menuItemClose.addSelectionListener(new SelectionAdapter() {
+			
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				sShell.close();
 			}
 		});
 		
@@ -570,7 +635,7 @@ public class StickLoader {
 	}
 	
 	public static void debug(final String s) {
-		if (!theApp.sShell.isDisposed() && debugAllowed)
+		if (!theApp.sShell.isDisposed() && DEBUG)
 		theApp.sShell.getDisplay().syncExec(new Runnable() {
 			public void run() {
 				//Color oldColor = theApp.debugList.getForeground();
@@ -659,8 +724,29 @@ public class StickLoader {
 	}
 
 	public static void main(String[] args) {
+		//change library path, but doesn't work on linux
+		String libraryPath = System.getProperty("java.library.path");
+		boolean containsCurrentDir = false;
+		for (String s : libraryPath.split(System.getProperty("path.separator"))) {
+			if (s.equals(".")) containsCurrentDir = true;
+		}
+		if (new File("/usr/lib").exists()) {
+			libraryPath = "/usr/lib" + System.getProperty("path.separator") + libraryPath;
+		}
+		if (new File("/usr/lib/jni").exists()) {
+			libraryPath = "/usr/lib/jni" + System.getProperty("path.separator") + libraryPath;
+		}
+		// TODO: What other locations might be important?
+		if (!containsCurrentDir) {
+			libraryPath = "." + System.getProperty("path.separator") + libraryPath;
+		}
+		System.setProperty("java.library.path", libraryPath);
+		
 		for (String s : args) {
-			if (s.trim().equals("-debug")) debugAllowed = true;
+			if (s.trim().equals("-debug")) {
+				System.out.println(System.getProperty("java.library.path"));
+				DEBUG = true;
+			}
 		}
 		new StickLoader();
 	}

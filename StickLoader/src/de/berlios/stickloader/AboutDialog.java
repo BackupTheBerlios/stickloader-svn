@@ -19,7 +19,6 @@
 
 package de.berlios.stickloader;
 
-import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Label;
@@ -27,12 +26,9 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Button;
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Link;
 
 public class AboutDialog {
 
@@ -40,10 +36,11 @@ public class AboutDialog {
 	private Label icon = null;
 	private Label name = null;
 	private Text textArea = null;
-	private Label label = null;
 	private Button button = null;
-	private Label link = null;
+	private Label label = null;
 	private Label label1 = null;
+	private Label link = null;
+
 	/**
 	 * This method initializes sShell
 	 */
@@ -58,10 +55,11 @@ public class AboutDialog {
 		gridData.horizontalAlignment = org.eclipse.swt.layout.GridData.FILL;
 		gridData.grabExcessVerticalSpace = true;
 		gridData.grabExcessHorizontalSpace = true;
+		gridData.widthHint = 350;
 		gridData.verticalAlignment = org.eclipse.swt.layout.GridData.FILL;
 		GridLayout gridLayout = new GridLayout();
 		gridLayout.numColumns = 2;
-		sShell = new Shell(SWT.PRIMARY_MODAL | SWT.DIALOG_TRIM | SWT.ON_TOP);
+		sShell = new Shell(SWT.PRIMARY_MODAL | SWT.DIALOG_TRIM);
 		sShell.setText("About Stickloader");
 		sShell.setLayout(gridLayout);
 		sShell.setSize(new org.eclipse.swt.graphics.Point(533,327));
@@ -75,7 +73,8 @@ public class AboutDialog {
 		textArea = new Text(sShell, SWT.MULTI | SWT.WRAP | SWT.READ_ONLY);
 		textArea.setText("Copyright (C) 2005 Alexander Kaiser\n\n" +
 				"This program includes software developed by the Eclipse Foundation (http://www.eclipse.org) (c) 2000-2005 Eclipse contributors and others.\n" +
-				"The icon is taken from the Nuvola Icon Theme (c) 2004-2005 VIGNONI DAVID (http://www.icon-king.com)\n"+
+				"The icon is taken from the Nuvola Icon Theme (c) 2004-2005 VIGNONI DAVID (http://www.icon-king.com)\n" +
+				"For ID3 functionality mp3info by Florian Heer (http://www.ueberdosis.de/java/id3.html) is used.\n"+
 				"\n" +
 				"This program is free software; you can redistribute " +
 				"it and/or modify it under the terms of the GNU General " +
@@ -105,6 +104,7 @@ public class AboutDialog {
 	
 	public void show() {
 		createSShell();
+		sShell.pack();
 		sShell.open();
 	}
 

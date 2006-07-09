@@ -9,7 +9,7 @@
    <property name="build.dir" value="build" />
    <property name="src.dir" value="src" />
 	
-   <property name="version" value="0.3" />
+   <property name="version" value="0.4" />
 <!--	<property name="version" value="${DSTAMP}${TSTAMP}" /> -->
    
    <property name="generic.excludes" value="**/*.jar **/*.txt" />
@@ -18,7 +18,7 @@
    
    
    <target name="init" >
-      <echo message="Building JMp3..." />
+      <echo message="Building Stickloader ${version}..." />
 
    	<delete dir="${build.dir}" includeemptydirs="true" />  	
    	<mkdir dir="${build.dir}" />
@@ -56,14 +56,17 @@
    	<jar destfile="${dist.dir}/stickloader.jar" basedir="${dist.dir}" excludes="${dist.jar.excludes}">
          <manifest>
             <attribute name="Main-Class" value="de.berlios.stickloader.StickLoader" />
-            <attribute name="Class-Path" value="jmp3.jar swt.jar org.eclipse.jface_3.1.0.jar org.eclipse.ui.forms_3.1.0.jar" />
+            <attribute name="Class-Path" value="jmp3.jar swt.jar org.eclipse.jface_3.1.0.jar org.eclipse.ui.forms_3.1.0.jar id3-1.6.0d9.jar" />
          </manifest>
       </jar>
 
    	<copy todir="${dist.dir}">
    		<fileset dir="${libs.dir}" includes="**/*" />
    	</copy>
-
+   	
+   	<copy todir="${dist.dir}">
+   	   		<fileset dir="." includes="LICENSE" />
+   	</copy>
    	
 	<exec executable="c:\Programme\JSmooth 0.9.7\jsmoothcmd.exe" >
    	    <arg value="jmp3.jsmooth"/>
@@ -71,26 +74,32 @@
    	
    	<zip destfile="${dist.dir}/stickloader-${version}-win.zip"
    	       basedir="${dist.dir}"
-   	       includes="*.jar *.dll *.exe"
+   	       includes="*.jar *.dll *.exe LICENSE"
    	  />
    	
-   	<zip destfile="${dist.dir}/stickloader-${version}-win-nowswt.zip"
+   	<zip destfile="${dist.dir}/stickloader-${version}-win-noswt.zip"
    	   	       basedir="${dist.dir}"
-   	   	       includes="sticklooader.jar *.dll *.exe"
+   	   	       includes="stickloader.jar *.dll *.exe LICENSE"
    	   	  />
    	
    	<zip destfile="${dist.dir}/stickloader-${version}-bin.zip"
    	   	   	       basedir="${dist.dir}"
-   	   	   	       includes="*.jar"
+   	   	   	       includes="*.jar LICENSE"
    				   excludes="swt.jar"
    	   	   	  />
    	
    	<zip destfile="${dist.dir}/stickloader-${version}-src.zip"
    	       basedir="."
-   		   excludes="build/** dist/** **.class bin/**"
+   		   excludes="build/** dist/** **.class bin/** LICENSE"
    	  />
    	
-   	<delete dir="${dist.dir}" excludes="*.zip" includeemptydirs="true"/> 
+   	<delete includeemptydirs="true"> 
+   		<fileset dir="${dist.dir}">
+   			<exclude name="stickloader.exe" />
+   			<exclude name="stickloader.jar" />
+   			<exclude name="**/*.zip" />
+   		</fileset>
+   	</delete>
    	
    </target>
 	

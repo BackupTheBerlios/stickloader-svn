@@ -37,7 +37,7 @@ public class Mp3File {
 	public String getPath() {
 		return path;
 	}
-	
+	 
 	public String getTargetName() {
 		String s = srcFile.getName();
 		if (!s.toLowerCase().endsWith(".mp3")) s = s +".mp3";

@@ -52,12 +52,20 @@ public class FileCopier implements FileProcessor {
 	public int getProgress() {
 		return progress;
 	}
+	
+	private void makeDir(File dir) {
+		if (!dir.exists()) {
+			makeDir(dir.getParentFile());
+			dir.mkdir();
+			dir.deleteOnExit();
+		}
+	}
 
 	public boolean processFile(Mp3File file) {
 			cancelNow = false;
 			File srcFile = new File(new File(tmpDir, file.getPath()), file.getTargetName());
 			File targetDir = new File(destDir, file.getPath());
-			if (!targetDir.exists()) targetDir.mkdirs();
+			makeDir(targetDir);
 			File destFile = new File(targetDir, file.getTargetName());
 			filename = destFile.getName();
 			StickLoader.debug("copying "+filename);
@@ -102,12 +110,19 @@ public class FileCopier implements FileProcessor {
 				totalCop++;
 				srcFile.delete();
 				filename = "NOTHING";
+				progress = 0;
 				return true;
 			} catch (FileNotFoundException exc) {
 				exc.printStackTrace();
+				srcFile.delete();
+				filename = "NOTHING";
+				progress = 0;
 				return false;
 			} catch (IOException exc) {
 				exc.printStackTrace();
+				srcFile.delete();
+				filename = "NOTHING";
+				progress = 0;
 				return false;
 			}
 	}
