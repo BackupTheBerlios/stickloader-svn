@@ -1,6 +1,6 @@
 /* Stickloader - http://stickloader.berlios.de
  * 
- * Created by Alexander Kaiser <mail@alexkaiser.de>
+ * Created by Alexander Kaiser <groer@users.berlios.de>
  *
  * Copyright (C) 2005 Alexander Kaiser, All rights Reserved
  *
@@ -25,6 +25,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
+import java.util.Collection;
+import java.util.Vector;
 
 import de.ueberdosis.mp3info.ID3Reader;
 import de.ueberdosis.mp3info.ID3Tag;
@@ -33,7 +35,8 @@ import de.ueberdosis.mp3info.ID3Writer;
 public class Mp3Encoder implements FileProcessor {
 
 	private String lamePath;
-	private String [] args; //= "--priority 1 -f --abr 100";
+	private Collection<String> args; //= "--priority 1 -f --abr 100";
+	private Collection<String> tempArgs = null;
 
 	private String filename;
 	private File destDir;
@@ -63,7 +66,9 @@ public class Mp3Encoder implements FileProcessor {
 	}
 	
 	public void setLameArgs(String s) {
-		this.args = parseArgs("--priority --nohist --disptime 0.5 " + s.trim() + " ");
+		// parse arguments. BEWARE: "--priority" only supported in win
+		if (Utils.isWindows()) this.args = parseArgs("--priority --nohist --disptime 0.5 " + s.trim() + " ");
+			else this.args = parseArgs("--nohist --disptime 0.5 " + s.trim() + " ");
 	}
 
 	public boolean processFile(Mp3File file) {
@@ -80,18 +85,28 @@ public class Mp3Encoder implements FileProcessor {
 		
 		try {
 			progress = 0;
-			String [] newargs = new String[args.length+3];
-			System.arraycopy(args, 0, newargs, 1, args.length);
-			newargs[0] = lamePath;
-			newargs[args.length+1] = file.getSrcFile().getAbsolutePath();
-			newargs[args.length+2] = targetFile.getAbsolutePath();
 			
-			final Process ps = Runtime.getRuntime().exec(newargs);
+			// construct arguments array
+			Vector <String> processArgs = new Vector<String>(this.args);
+			if (tempArgs != null) {
+				for (String s : tempArgs) {
+					processArgs.add(s);
+				}
+				tempArgs = null; //IMPORTANT!!
+			}
+			processArgs.add(0, lamePath);
+			processArgs.add(file.getSrcFile().getAbsolutePath());
+			processArgs.add(targetFile.getAbsolutePath());
+			
+			final Process ps = Runtime.getRuntime().exec(processArgs.toArray(new String [] {}));
 			
 			//Process ps = Runtime.getRuntime().exec(new String [] { lamePath, "--priority", "--nohist", "--disptime", "0.5", "-f", "--abr", "100", , targetFile.getAbsolutePath()});
 			//final BufferedReader input = new BufferedReader(new InputStreamReader(ps.getInputStream()));
-			ps.getInputStream().close();
+			//ps.getInputStream().close();
 			final BufferedReader error = new BufferedReader(new InputStreamReader(ps.getErrorStream()));
+			final BufferedReader input = new BufferedReader(new InputStreamReader(ps.getInputStream()));
+			input.close();
+
 			ps.getOutputStream().close();
 			Thread myThread = new Thread() {
 				public void run() {
@@ -109,8 +124,11 @@ public class Mp3Encoder implements FileProcessor {
 									targetFile.delete();
 									return;
 								}
-								if (StickLoader.DEBUG) err = error.readLine();
-								System.out.println(err);
+								err = error.readLine();
+								if (StickLoader.DEBUG) {
+									//System.out.println(input.readLine());
+									System.out.println(err);
+								}
 								for (String s : err.split("[()]")) {
 									if (s.endsWith("%")) {
 										try {
@@ -133,14 +151,21 @@ public class Mp3Encoder implements FileProcessor {
 			int returnValue = ps.waitFor();
 			//System.out.println("LAME return: " + ps.waitFor());
 				
-			if (!cancelNow) totalEnc++;
 			filename = "NOTHING";
 			myThread.interrupt();
 			if (cancelNow) {
 				progress = 0;
 				return false; 
 			}
-			else return (returnValue == 0);
+			
+			// what is the correct return value ??
+			StickLoader.debug("LAME return value == "+returnValue);
+			
+			if (returnValue == 0 || returnValue == 141) { // TODO what the hell is exit value 141 
+				// encoding successful
+				totalEnc++;
+				return true;
+			} return false;
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -152,8 +177,23 @@ public class Mp3Encoder implements FileProcessor {
 		}
 	}
 	
-	private String [] parseArgs(String args) {
-		return args.split(" ");
+	/**
+	 * Use tempArgs as additional LAME arguments for the next encoding.
+	 * Don't forget to delete after first use.
+	 * 
+	 * @param tempArgs
+	 */
+	public void setTempArgs(Collection <String> tempArgs) {
+		this.tempArgs = tempArgs;
+	}
+	
+	private Vector<String> parseArgs(String newArgs) {
+		Vector<String> args = new Vector<String>();
+		for (String s : newArgs.split(" ")) {
+			args.add(s);
+		}
+		
+		return args;
 	}
 	
 	

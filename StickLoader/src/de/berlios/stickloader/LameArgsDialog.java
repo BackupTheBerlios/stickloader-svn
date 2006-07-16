@@ -1,6 +1,6 @@
 /* Stickloader - http://stickloader.berlios.de
  * 
- * Created by Alexander Kaiser <mail@alexkaiser.de>
+ * Created by Alexander Kaiser <groer@users.berlios.de>
  *
  * Copyright (C) 2006 Alexander Kaiser, All rights Reserved
  *
@@ -130,7 +130,11 @@ public class LameArgsDialog {
 		gridData.widthHint = 70;
 		GridLayout gridLayout = new GridLayout();
 		gridLayout.numColumns = 3;
-		sShell = new Shell(SWT.ON_TOP | SWT.APPLICATION_MODAL | SWT.DIALOG_TRIM);
+		
+		int shellProperties = SWT.APPLICATION_MODAL | SWT.DIALOG_TRIM;
+		if (Utils.isWindows()) shellProperties = shellProperties | SWT.ON_TOP;
+
+		sShell = new Shell(shellProperties);
 		sShell.setText("Select Encoding Parameters");
 		sShell.setLayout(gridLayout);
 		radioPresets = new Button(sShell, SWT.RADIO);
@@ -311,7 +315,8 @@ public class LameArgsDialog {
 		if (comboQuality.getText().equals(HIGH_QUALITY)) args += "-h ";
 		if (comboQuality.getText().equals(FAST_QUALITY)) args += "-f ";
 		
-		textArgs.setEnabled(radioExpert.getSelection());		
+		textArgs.setEnabled(radioExpert.getSelection());
+		comboQuality.setEnabled(!radioExpert.getSelection());
 		
 		if (!radioExpert.getSelection()) {
 			textArgs.setText(args);
@@ -345,7 +350,7 @@ public class LameArgsDialog {
 		comboQuality.add(HIGH_QUALITY);
 		comboQuality.add(STANDARD_QUALITY);
 		comboQuality.add(FAST_QUALITY);
-		comboQuality.setText("Standard");
+		comboQuality.setText(STANDARD_QUALITY);
 		comboQuality.setLayoutData(gridData6);
 		comboQuality
 				.addSelectionListener(new org.eclipse.swt.events.SelectionListener() {

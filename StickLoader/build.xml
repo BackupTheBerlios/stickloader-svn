@@ -9,7 +9,7 @@
    <property name="build.dir" value="build" />
    <property name="src.dir" value="src" />
 	
-   <property name="version" value="0.4" />
+   <property name="version" value="0.5" />
 <!--	<property name="version" value="${DSTAMP}${TSTAMP}" /> -->
    
    <property name="generic.excludes" value="**/*.jar **/*.txt" />
@@ -75,6 +75,7 @@
    	<zip destfile="${dist.dir}/stickloader-${version}-win.zip"
    	       basedir="${dist.dir}"
    	       includes="*.jar *.dll *.exe LICENSE"
+   		   excludes="lame.exe"
    	  />
    	
    	<zip destfile="${dist.dir}/stickloader-${version}-win-noswt.zip"
@@ -90,7 +91,7 @@
    	
    	<zip destfile="${dist.dir}/stickloader-${version}-src.zip"
    	       basedir="."
-   		   excludes="build/** dist/** **.class bin/** LICENSE"
+   		   excludes="build/** dist/** **.class bin/** libs/** linuxlibs/**"
    	  />
    	
    	<delete includeemptydirs="true"> 

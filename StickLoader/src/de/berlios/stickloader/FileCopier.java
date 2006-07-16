@@ -1,5 +1,5 @@
 /* Stickloader - http://stickloader.berlios.de
- * Created by Alexander Kaiser <mail@alexkaiser.de>
+ * Created by Alexander Kaiser <groer@users.berlios.de>
  *
  * Copyright (C) 2005 Alexander Kaiser, All rights Reserved
  *

@@ -1,8 +1,13 @@
-Stickloader is licensed under the GNU General Public License (GPL) Version 2 (License text below). It contains
-parts of Eclipse libraries which are not covered by this license. They are only provided in binary form and may
-not be altered or redistributed without permission of the Eclipse Foundation (http://www.eclipse.org).
+Stickloader is licensed under the GNU General Public License (GPL) Version 2 (License text below). 
 
----------------------------------------------------
+Stickloader contains parts of Eclipse libraries which are not covered by this license. They are only provided in binary form and may not be altered or redistributed without permission of the Eclipse Foundation (http://www.eclipse.org).
+
+Stickloader uses icons from the Nuvola Icon Theme (c) 2004-2005 VIGNONI DAVID (http://www.icon-king.com).
+
+For ID3 functionality mp3info by Florian Heer (http://www.ueberdosis.de/java/id3.html) is included which is published under the LGPL.
+
+Stickloader needs LAME (http://lame.sourceforge.net) for MP3 encoding which is not included in this package. MP3 is a technology developed at the Fraunhofer Gesellschaft in Germany. The Fraunhofer Gesellschaft and possibly other companies own patents of technologies being part of MP3 for which they charge license fees (http://www.mp3licensing.com). When using the program together with an MP3 encoder like LAME you confirm that you do own a license of the appropriate patent owners. LAME is released under the LGPL.
+
 
 The GNU General Public License (GPL)
 Version 2, June 1991
@@ -96,3 +101,4 @@ NO WARRANTY
 12. IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR REDISTRIBUTE THE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE THE PROGRAM (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER PROGRAMS), EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
 
 END OF TERMS AND CONDITIONS
+

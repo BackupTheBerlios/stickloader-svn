@@ -6,7 +6,7 @@ SetCompressor lzma
 
 # Defines
 !define REGKEY "SOFTWARE\$(^Name)"
-!define VERSION 0.4
+!define VERSION 0.5
 !define COMPANY "Alexander Kaiser"
 !define URL http://stickloader.berlios.de
 
@@ -45,7 +45,7 @@ Page custom ShowLameOption
 !insertmacro MUI_LANGUAGE English
 
 # Installer attributes
-OutFile dist\StickLoaderSetup.exe
+OutFile dist\StickLoader-0.5-Setup.exe
 InstallDir $PROGRAMFILES\StickLoader
 CRCCheck on
 XPStyle on
@@ -65,7 +65,7 @@ SilentUnInstall normal
 Section -Main SEC0000
     SetOutPath $INSTDIR
     SetOverwrite on
-    File libs\swt-win32-3139.dll
+    File libs\swt-win32-3232.dll
     File libs\id3-1.6.0d9.jar
     File libs\org.eclipse.jface_3.1.0.jar
     File libs\org.eclipse.ui.forms_3.1.0.jar
@@ -125,7 +125,7 @@ Section /o un.Main UNSEC0000
     Delete /REBOOTOK $INSTDIR\org.eclipse.ui.forms_3.1.0.jar
     Delete /REBOOTOK $INSTDIR\org.eclipse.jface_3.1.0.jar
     Delete /REBOOTOK $INSTDIR\id3-1.6.0d9.jar
-    Delete /REBOOTOK $INSTDIR\swt-win32-3139.dll
+    Delete /REBOOTOK $INSTDIR\swt-win32-3232.dll
     Delete /REBOOTOK $INSTDIR\lame.exe
     Delete /REBOOTOK $INSTDIR\lame3.97b2.zip
     DeleteRegValue HKLM "${REGKEY}\Components" Main

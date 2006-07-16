@@ -1,5 +1,5 @@
 /* Stickloader - http://stickloader.berlios.de
- * Created by Alexander Kaiser <mail@alexkaiser.de>
+ * Created by Alexander Kaiser <groer@users.berlios.de>
  *
  * Copyright (C) 2005 Alexander Kaiser, All rights Reserved
  *
@@ -21,6 +21,9 @@ package de.berlios.stickloader;
 
 public class Utils {
 	
+	public static final String FILE_SEPARATOR = System.getProperty("file.separator");
+	public static final String LINE_BREAK = System.getProperty("line.separator");
+	
 	public static boolean isWindows() {
 		return System.getProperty("os.name").toLowerCase().contains("windows");
 	}
@@ -36,7 +39,11 @@ public class Utils {
 	
 	public static boolean isExecutable(String fileName) {
 		try {
-			Runtime.getRuntime().exec(fileName).waitFor();
+			Process ps = Runtime.getRuntime().exec(fileName);
+			ps.getErrorStream().close();
+			ps.getInputStream().close();
+			ps.getOutputStream().close();
+			ps.waitFor();
 			return true;
 		} catch (Exception e) {
 			// exception -> filename is not executable

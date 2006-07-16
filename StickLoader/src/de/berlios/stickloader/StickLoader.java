@@ -1,6 +1,6 @@
 /* Stickloader - http://stickloader.berlios.de
  * 
- * Created by Alexander Kaiser <mail@alexkaiser.de>
+ * Created by Alexander Kaiser <groer@users.berlios.de>
  *
  * Copyright (C) 2005 Alexander Kaiser, All rights Reserved
  *
@@ -25,6 +25,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.RandomAccessFile;
 import java.util.Properties;
+import java.util.Vector;
 
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Label;
@@ -94,7 +95,7 @@ public class StickLoader {
 	
 	private int backupTableSize = 100;
 	
-	public static boolean DEBUG = true;
+	public static boolean DEBUG = false;
 
 	public StickLoader() {
 		theApp = this;
@@ -182,13 +183,40 @@ public class StickLoader {
 		if (lamePath != null) {
 			if (!Utils.isExecutable(lamePath)) lamePath = null;
 		} 
-		if (lamePath == null) {
-			if (new File(System.getProperty("user.dir"), "lame.exe").exists()) {
-				lamePath = new File(System.getProperty("user.dir"), "lame.exe").getAbsolutePath();
-			} else if (Utils.isExecutable("lame")) lamePath = "lame";
-			else getLamePath();
-		}
+		if (lamePath == null) 
+			if (!findLame()) getLamePath();
 		if (lamePath == null) lamePath= "";
+	}
+	
+	/**
+	 * look for LAME
+	 *
+	 */
+	private boolean findLame() {
+		if (lookForLame(new File(System.getProperty("user.dir")))) return true;
+		String [] pathDirs = System.getenv("PATH").split(System.getProperty("path.separator"));
+		for (String s : pathDirs) {
+			if (lookForLame(new File(s))) return true;
+		}
+		
+		return false;
+	}
+	
+	private boolean lookForLame(File dir) {
+		File f;
+		if ((f = new File(dir, "lame")).exists()) {
+			if (Utils.isExecutable(f.getAbsolutePath())){
+				lamePath = f.getAbsolutePath();
+				return true;
+			}
+			
+		} else if ((f = new File(dir, "lame.exe")).exists()) {
+			if (Utils.isExecutable(f.getAbsolutePath())){
+				lamePath = f.getAbsolutePath();
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	
@@ -324,27 +352,49 @@ public class StickLoader {
 						// copy id3-tag
 						if (mp3.getSrcFile().getName().endsWith(".mp3")) {
 							try {
+								Vector <String> tempArgs = new Vector<String>();
+								
 								ID3Tag tag = ID3Reader.readTag(new RandomAccessFile(mp3.getSrcFile(), "r" ));
 								
 								// set temporary lameArgs
-								String tempArgs = "";
+								tempArgs.add("--mp3input");
 
-								if (!tag.getTitle().trim().equals("")) tempArgs += "--tt \"" + tag.getTitle() + "\" ";
-								if (!tag.getArtist().trim().equals("")) tempArgs += "--ta \"" + tag.getArtist() + "\" "; 
-								if (!tag.getAlbum().trim().equals("")) tempArgs += "--tl \"" + tag.getAlbum() + "\" ";
-								if (!tag.getYear().trim().equals("")) tempArgs += "--ty \"" + tag.getYear() + "\" ";
-								if (!tag.getComment().trim().equals("")) tempArgs += "--tc \"" + tag.getComment() + "\" ";
-								if (!tag.getTrackS().trim().equals("")) tempArgs += "--tn \"" + tag.getTrackS() + "\" ";
-								try {
-									if (!tag.getGenreS().trim().equals("")) tempArgs += "--tg \"" + tag.getGenreS() + "\" ";
-								} catch (ArrayIndexOutOfBoundsException e) {
-									//egal...
-								}
-								
-								encoder.setLameArgs(lameArgs.trim() + " " + tempArgs);
+								if (tag.isValidTag()) {								
+									if (!tag.getTitle().trim().equals("")) {
+										tempArgs.add("--tt");
+										tempArgs.add(tag.getTitle());
+									}
+									if (!tag.getArtist().trim().equals("")) {
+										tempArgs.add("--ta");
+										tempArgs.add(tag.getArtist()); 
+									}
+									if (!tag.getAlbum().trim().equals("")) {
+										tempArgs.add("--tl");
+										tempArgs.add(tag.getAlbum());
+									}
+									if (!tag.getYear().trim().equals("")) {
+										tempArgs.add("--ty");
+										tempArgs.add(tag.getYear());
+									}
+									if (!tag.getComment().trim().equals("")) {
+										tempArgs.add("--tc");
+										tempArgs.add(tag.getComment());
+									}
+									if (!tag.getTrackS().trim().equals("")) {
+										tempArgs.add("--tn");
+										tempArgs.add(tag.getTrackS());
+									}
+									
+									tempArgs.add("--tg");
+									debug("Genre: "  + tag.getGenre());
+									tempArgs.add("" + tag.getGenre());									
+								} else debug("No valid tag");
+
+								encoder.setTempArgs(tempArgs);
+									
 							} catch (Exception e) {
-								debug("Exception while reading ID3: " + e.getMessage());
-								e.printStackTrace();
+								error("Exception while reading ID3: " + e.getMessage());
+								if (DEBUG) e.printStackTrace();
 							}
 						}
 
@@ -354,7 +404,6 @@ public class StickLoader {
 						} else {
 							error("Encoding failed: " + mp3.getSrcFile().getName() + "\"");
 						}
-						encoder.setLameArgs(lameArgs); // reset lame args
 					}
 				}
 				System.out.println("EncodeThread finished");
@@ -655,6 +704,17 @@ public class StickLoader {
 	
 	public static void debug(final String s) {
 		if (DEBUG) {
+			String errorPosition = "";
+			StackTraceElement [] stackTrace = new Exception().getStackTrace();
+			try {				
+				errorPosition = stackTrace[1].getClassName() + 
+					"." + stackTrace[1].getMethodName()
+					+"("+stackTrace[1].getFileName() + ":" +
+					stackTrace[1].getLineNumber()+")";
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			
 			if (!theApp.sShell.isDisposed()) {
 				theApp.sShell.getDisplay().syncExec(new Runnable() {
 					public void run() {
@@ -668,7 +728,7 @@ public class StickLoader {
 					}
 				});
 			}
-			System.out.println("DEBUG: " + s);
+			System.out.println("DEBUG " + errorPosition + " : " + s);
 		}
 		
 	}
@@ -694,12 +754,12 @@ public class StickLoader {
 	
 	public void addFile(File file, String path) {
 		if (file.isDirectory()) {
-			for (File f : file.listFiles()) addFile(f, path + "\\" + file.getName());
+			for (File f : file.listFiles()) addFile(f, path + Utils.FILE_SEPARATOR + file.getName());
 		} else {
 			if (file.getName().toLowerCase().endsWith(".mp3") || file.getName().toLowerCase().endsWith(".wav")) {
 				Mp3File mp3 = new Mp3File(file, path);
 				encodingQueue.add(mp3);
-				debug("Add File: " + path + "\\" + file.getName());
+				debug("Add File: " + file.getAbsolutePath());
 			}
 		}
 	}
